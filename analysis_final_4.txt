@@ -1,0 +1,8 @@
+Analyzing chess_tournament_manager...                           
+
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\logic\export_logic.dart:101:11 - deprecated_member_use
+   info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\logic\export_logic.dart:101:17 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\screens\check_in_screen.dart:104:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\check_in_screen.dart:105:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\check_in_screen.dart:107:40 - use_build_context_synchronously
+

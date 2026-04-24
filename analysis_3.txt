@@ -1,0 +1,8 @@
+Analyzing chess_tournament_manager...                           
+
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\logic\export_logic.dart:64:11 - deprecated_member_use
+   info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\logic\export_logic.dart:64:17 - deprecated_member_use
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\logic\export_logic.dart:108:11 - deprecated_member_use
+   info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\logic\export_logic.dart:108:17 - deprecated_member_use
+   info - Unnecessary use of string interpolation - lib\screens\main_screen.dart:356:15 - unnecessary_string_interpolations
+

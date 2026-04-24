@@ -1,0 +1,6 @@
+Analyzing chess_tournament_manager...                           
+
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\logic\export_logic.dart:101:11 - deprecated_member_use
+   info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\logic\export_logic.dart:101:17 - deprecated_member_use
+   info - Unnecessary 'const' keyword - lib\screens\main_screen.dart:357:11 - unnecessary_const
+
