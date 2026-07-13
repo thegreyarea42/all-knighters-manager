@@ -24,6 +24,15 @@ jobs:
   build:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    # Enable GitHub Actions' debug logging at the job level so every step
+    # emits ::debug:: traces, expanded context lines, and full runner env
+    # diagnostics. The trade-off is a modest increase in log noise on every
+    # deploy — but for a once-per-deploy tournament build, the diagnostic
+    # value outweighs the cosmetic cost. To turn this off later: remove the
+    # ACTIONS_STEP_DEBUG entry below, or move it behind a workflow_dispatch
+    # input / repo secret so it's opt-in.
+    env:
+      ACTIONS_STEP_DEBUG: 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
