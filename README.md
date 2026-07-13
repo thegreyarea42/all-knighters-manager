@@ -2,6 +2,12 @@
 
 **🌍 Live Demo:** [https://thegreyarea42.github.io/all-knighters-manager/](https://thegreyarea42.github.io/all-knighters-manager/)
 
+<div align="center">
+
+[![Deploy Flutter Web to GitHub Pages](https://github.com/thegreyarea42/all-knighters-manager/actions/workflows/deploy.yml/badge.svg)](https://github.com/thegreyarea42/all-knighters-manager/actions/workflows/deploy.yml)
+
+</div>
+
 A high-polish, Markdown-driven Chess Tournament Manager built in Flutter for the **All Knighters Chess Club**. This app automates pairings, parses historical handicap data natively from Markdown files, and visually coordinates live timed rounds—all without needing a hidden or external database.
 
 ## ✨ Features
