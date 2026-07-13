@@ -14,13 +14,17 @@ class ExportLogic {
     return name.replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(' ', '_');
   }
 
-  static Future<void> exportToMarkdown({
+  /// Builds the markdown body for a tournament. Pure function (no I/O),
+  /// intended as the canonical entry point for unit tests so that we can
+  /// verify Buchholz, results formatting, round-trip integrity, etc.
+  /// without invoking the platform-specific share channel.
+  static String generateMarkdown({
     required String tournamentName,
     required List<Player> players,
     required List<Round> rounds,
     required int totalRounds,
     required int duration,
-  }) async {
+  }) {
     final now = DateTime.now();
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     final fileDateFormat = DateFormat('yyyy-MM-dd');
@@ -105,11 +109,34 @@ class ExportLogic {
     sb.writeln(jsonEncode(data));
     sb.writeln('STATE_JSON_END -->');
 
+    return sb.toString();
+  }
+
+  static Future<void> exportToMarkdown({
+    required String tournamentName,
+    required List<Player> players,
+    required List<Round> rounds,
+    required int totalRounds,
+    required int duration,
+  }) async {
+    final now = DateTime.now();
+    final fileDateFormat = DateFormat('yyyy-MM-dd');
+
     // Task 2: Dynamic Filename Formatting
     final sanitizedName = sanitizeFileName(tournamentName);
     final fileName = '${sanitizedName}_${fileDateFormat.format(now)}.md';
 
-    final bytes = Uint8List.fromList(utf8.encode(sb.toString()));
+    final bytes = Uint8List.fromList(
+      utf8.encode(
+        generateMarkdown(
+          tournamentName: tournamentName,
+          players: players,
+          rounds: rounds,
+          totalRounds: totalRounds,
+          duration: duration,
+        ),
+      ),
+    );
     final xFile = XFile.fromData(
       bytes,
       mimeType: 'text/markdown',
