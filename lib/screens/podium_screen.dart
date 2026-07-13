@@ -19,7 +19,9 @@ class _PodiumScreenState extends State<PodiumScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _confettiController.play();
     });
@@ -67,147 +69,153 @@ class _PodiumScreenState extends State<PodiumScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-            const Text(
-              'ALL KNIGHTERS CHESS CLUB',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '🏆 TOURNAMENT COMPLETE',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-                color: Colors.blueAccent,
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // Podium
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // 2nd Place
-                  Expanded(
-                    child: _buildPodiumMember(
-                      context,
-                      silver,
-                      2,
-                      Colors.grey.shade400,
-                      120,
-                    ),
+                const Text(
+                  'ALL KNIGHTERS CHESS CLUB',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 4,
+                    color: Colors.grey,
                   ),
-                  const SizedBox(width: 8),
-                  // 1st Place
-                  Expanded(
-                    child: _buildPodiumMember(
-                      context,
-                      gold,
-                      1,
-                      Colors.yellow.shade700,
-                      180,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '🏆 TOURNAMENT COMPLETE',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                    color: Colors.blueAccent,
                   ),
-                  const SizedBox(width: 8),
-                  // 3rd Place
-                  Expanded(
-                    child: _buildPodiumMember(
-                      context,
-                      bronze,
-                      3,
-                      Colors.orange.shade800,
-                      90,
-                    ),
+                ),
+                const SizedBox(height: 40),
+
+                // Podium
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // 2nd Place
+                      Expanded(
+                        child: _buildPodiumMember(
+                          context,
+                          silver,
+                          2,
+                          Colors.grey.shade400,
+                          120,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // 1st Place
+                      Expanded(
+                        child: _buildPodiumMember(
+                          context,
+                          gold,
+                          1,
+                          Colors.yellow.shade700,
+                          180,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // 3rd Place
+                      Expanded(
+                        child: _buildPodiumMember(
+                          context,
+                          bronze,
+                          3,
+                          Colors.orange.shade800,
+                          90,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: 40),
-            const Divider(
-              color: Colors.white10,
-              thickness: 1,
-              indent: 40,
-              endIndent: 40,
-            ),
-            const SizedBox(height: 20),
+                const SizedBox(height: 40),
+                const Divider(
+                  color: Colors.white10,
+                  thickness: 1,
+                  indent: 40,
+                  endIndent: 40,
+                ),
+                const SizedBox(height: 20),
 
-            // Remainder List
-            if (ranked.length > 3)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  children: List.generate(ranked.length - 3, (index) {
-                    final p = ranked[index + 3];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.white10,
-                        radius: 14,
-                        child: Text(
-                          '${index + 4}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
+                // Remainder List
+                if (ranked.length > 3)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      children: List.generate(ranked.length - 3, (index) {
+                        final p = ranked[index + 3];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.white10,
+                            radius: 14,
+                            child: Text(
+                              '${index + 4}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      title: Text(
-                        p.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      trailing: Text(
-                        '${p.totalScore.toStringAsFixed(1)} pts',
-                        style: const TextStyle(
-                          color: Colors.greenAccent,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
+                          title: Text(
+                            p.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: Text(
+                            '${p.totalScore.toStringAsFixed(1)} pts',
+                            style: const TextStyle(
+                              color: Colors.greenAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
 
-            const SizedBox(height: 40),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: ElevatedButton.icon(
-                onPressed: () => ExportLogic.exportToMarkdown(
-                  tournamentName: provider.tournamentName,
-                  players: provider.players,
-                  rounds: provider.rounds,
-                  totalRounds: settings.totalRounds,
-                  duration: settings.roundDuration,
-                ),
-                icon: const Icon(Icons.share_rounded),
-                label: const Text('SHARE FINAL REPORT'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 60),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 40),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () => ExportLogic.exportToMarkdown(
+                      tournamentName: provider.tournamentName,
+                      players: provider.players,
+                      rounds: provider.rounds,
+                      totalRounds: settings.totalRounds,
+                      duration: settings.roundDuration,
+                    ),
+                    icon: const Icon(Icons.share_rounded),
+                    label: const Text('SHARE FINAL REPORT'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 60),
+              ],
             ),
-            const SizedBox(height: 60),
-          ],
-        ),
-      ),
+          ),
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
               confettiController: _confettiController,
               blastDirectionality: BlastDirectionality.explosive,
               shouldLoop: false,
-              colors: const [Colors.blue, Colors.yellow, Colors.green, Colors.orange, Colors.purple],
+              colors: const [
+                Colors.blue,
+                Colors.yellow,
+                Colors.green,
+                Colors.orange,
+                Colors.purple,
+              ],
               maxBlastForce: 20,
               minBlastForce: 5,
               emissionFrequency: 0.05,

@@ -221,10 +221,10 @@ class _MainScreenState extends State<MainScreen>
         duration: const Duration(milliseconds: 500),
         color: provider.isTournamentStarted && provider.currentRound != null
             ? (provider.secondsRemaining == 0
-                ? Colors.red.shade900
-                : (provider.secondsRemaining <= 300
-                    ? Colors.yellow.withValues(alpha: 0.2)
-                    : Colors.transparent))
+                  ? Colors.red.shade900
+                  : (provider.secondsRemaining <= 300
+                        ? Colors.yellow.withValues(alpha: 0.2)
+                        : Colors.transparent))
             : Colors.transparent,
         child: TabBarView(
           controller: _tabController,
@@ -462,9 +462,9 @@ class _MainScreenState extends State<MainScreen>
         : provider.players.firstWhere((p) => p.id == pairing.blackPlayerId);
 
     final isRound1 = provider.currentRoundNumber == 1;
-    final diffText = (!pairing.isBye) 
+    final diffText = (!pairing.isBye)
         ? '${whitePlayer.handicap > 0 ? '+' : ''}${whitePlayer.handicap.toStringAsFixed(1)} vs '
-          '${blackPlayer!.handicap > 0 ? '+' : ''}${blackPlayer.handicap.toStringAsFixed(1)}'
+              '${blackPlayer!.handicap > 0 ? '+' : ''}${blackPlayer.handicap.toStringAsFixed(1)}'
         : '';
 
     return Card(

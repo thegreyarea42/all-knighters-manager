@@ -17,27 +17,30 @@ Player _p(
   List<String>? opponentsPlayed,
   List<double>? history,
   bool hadBye = false,
-}) =>
-    Player(
-      id: id,
-      name: name,
-      earnedPoints: earnedPoints,
-      handicap: handicap,
-      colorHistory: colorHistory,
-      opponentsPlayed: opponentsPlayed,
-      history: history,
-      hadBye: hadBye,
-    );
+}) => Player(
+  id: id,
+  name: name,
+  earnedPoints: earnedPoints,
+  handicap: handicap,
+  colorHistory: colorHistory,
+  opponentsPlayed: opponentsPlayed,
+  history: history,
+  hadBye: hadBye,
+);
 
-Round _round(int number, List<Pairing> pairings,
-        {DateTime? startTime, DateTime? completedTime, bool isCompleted = true}) =>
-    Round(
-      number: number,
-      pairings: pairings,
-      startTime: startTime ?? DateTime(2024, 1, 1, 10, 0),
-      completedTime: completedTime ?? DateTime(2024, 1, 1, 10, 30),
-      isCompleted: isCompleted,
-    );
+Round _round(
+  int number,
+  List<Pairing> pairings, {
+  DateTime? startTime,
+  DateTime? completedTime,
+  bool isCompleted = true,
+}) => Round(
+  number: number,
+  pairings: pairings,
+  startTime: startTime ?? DateTime(2024, 1, 1, 10, 0),
+  completedTime: completedTime ?? DateTime(2024, 1, 1, 10, 30),
+  isCompleted: isCompleted,
+);
 
 /// Extract the body of the "## Final Leaderboard" section (between that
 /// heading and the next `## ` heading).
@@ -60,7 +63,11 @@ List<String> _rowByName(String section, String name) {
   final line = section
       .split('\n')
       .firstWhere((l) => l.contains(name), orElse: () => '');
-  return line.split('|').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+  return line
+      .split('|')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList();
 }
 
 // ===========================================================================
@@ -70,13 +77,18 @@ List<String> _rowByName(String section, String name) {
 void main() {
   // -------------------------------------------------------------------------
   group('ExportLogic.sanitizeFileName', () {
-    test('replaces spaces with underscores (each space becomes one underscore; no trimming)', () {
-      expect(ExportLogic.sanitizeFileName('Hello World'), 'Hello_World');
-      // Strip phase removes non-word/whitespace/hyphen chars; replace phase
-      // turns every ASCII space into an underscore (no collapsing).
-      expect(ExportLogic.sanitizeFileName('  Multiple   Spaces  '),
-          '__Multiple___Spaces__');
-    });
+    test(
+      'replaces spaces with underscores (each space becomes one underscore; no trimming)',
+      () {
+        expect(ExportLogic.sanitizeFileName('Hello World'), 'Hello_World');
+        // Strip phase removes non-word/whitespace/hyphen chars; replace phase
+        // turns every ASCII space into an underscore (no collapsing).
+        expect(
+          ExportLogic.sanitizeFileName('  Multiple   Spaces  '),
+          '__Multiple___Spaces__',
+        );
+      },
+    );
 
     test('strips common disallowed characters (slash, asterisk, etc.)', () {
       expect(ExportLogic.sanitizeFileName('a/b\\c:d*e?f|g'), 'abcdefg');
@@ -84,7 +96,10 @@ void main() {
     });
 
     test('preserves letters, digits, and hyphens', () {
-      expect(ExportLogic.sanitizeFileName('Friday-Cup-2024'), 'Friday-Cup-2024');
+      expect(
+        ExportLogic.sanitizeFileName('Friday-Cup-2024'),
+        'Friday-Cup-2024',
+      );
       expect(ExportLogic.sanitizeFileName('Tournament_42'), 'Tournament_42');
     });
 
@@ -92,43 +107,45 @@ void main() {
       expect(ExportLogic.sanitizeFileName(''), '');
     });
 
-    test('non-whitespace special chars are stripped (yield empty for only-special input)', () {
-      expect(ExportLogic.sanitizeFileName(r'!@#$%^&*()'), '');
-      // Three spaces survive stripping (whitespace is allowed by [^\w\s\-])
-      // and become three underscores.
-      expect(ExportLogic.sanitizeFileName('   '), '___');
-    });
+    test(
+      'non-whitespace special chars are stripped (yield empty for only-special input)',
+      () {
+        expect(ExportLogic.sanitizeFileName(r'!@#$%^&*()'), '');
+        // Three spaces survive stripping (whitespace is allowed by [^\w\s\-])
+        // and become three underscores.
+        expect(ExportLogic.sanitizeFileName('   '), '___');
+      },
+    );
 
     test('mixed: keeps allowed, strips rest, applies underscores', () {
       expect(
-          ExportLogic.sanitizeFileName('Winter Cup: Finals! (2024)'),
-          'Winter_Cup_Finals_2024');
+        ExportLogic.sanitizeFileName('Winter Cup: Finals! (2024)'),
+        'Winter_Cup_Finals_2024',
+      );
     });
   });
 
   // -------------------------------------------------------------------------
   group('ExportLogic.parseMarkdown', () {
-    test('returns null when validation tag (`app: TiltClock`) is missing',
-        () {
+    test('returns null when validation tag (`app: TiltClock`) is missing', () {
       expect(ExportLogic.parseMarkdown('# Random Markdown'), isNull);
       expect(ExportLogic.parseMarkdown(''), isNull);
-      expect(
-        ExportLogic.parseMarkdown('---\nclub: Foo\n---\n# Body'),
-        isNull,
-      );
+      expect(ExportLogic.parseMarkdown('---\nclub: Foo\n---\n# Body'), isNull);
     });
 
-    test('returns null when STATE_JSON markers are missing despite valid tag',
-        () {
-      const md = '''---
+    test(
+      'returns null when STATE_JSON markers are missing despite valid tag',
+      () {
+        const md = '''---
 app: TiltClock
 club: All Knighters
 ---
 # Tournament Name
 This is body content without JSON.
 ''';
-      expect(ExportLogic.parseMarkdown(md), isNull);
-    });
+        expect(ExportLogic.parseMarkdown(md), isNull);
+      },
+    );
 
     test('extracts the STATE_JSON blob between markers', () {
       const md = '''---
@@ -156,67 +173,76 @@ STATE_JSON_END -->''';
       expect(ExportLogic.parseMarkdown(md), isNull);
     });
 
-    test('round-trip: generateMarkdown → parseMarkdown preserves GAME STATE',
-        () {
-      final players = [
-        _p('alice-id', 'Alice',
+    test(
+      'round-trip: generateMarkdown → parseMarkdown preserves GAME STATE',
+      () {
+        final players = [
+          _p(
+            'alice-id',
+            'Alice',
             earnedPoints: 2.0,
             handicap: 0.5,
             opponentsPlayed: const ['bob-id'],
             colorHistory: const [ChessColor.white],
-            history: const [2.0, 1.0]),
-        _p('bob-id', 'Bob',
+            history: const [2.0, 1.0],
+          ),
+          _p(
+            'bob-id',
+            'Bob',
             earnedPoints: 0.0,
             handicap: 0.0,
             opponentsPlayed: const ['alice-id'],
-            colorHistory: const [ChessColor.black]),
-      ];
-      final rounds = [
-        _round(1, [
-          Pairing(
-            whitePlayerId: 'alice-id',
-            blackPlayerId: 'bob-id',
-            result: GameResult.whiteWin,
+            colorHistory: const [ChessColor.black],
           ),
-        ]),
-      ];
+        ];
+        final rounds = [
+          _round(1, [
+            Pairing(
+              whitePlayerId: 'alice-id',
+              blackPlayerId: 'bob-id',
+              result: GameResult.whiteWin,
+            ),
+          ]),
+        ];
 
-      final md = ExportLogic.generateMarkdown(
-        tournamentName: 'Round-Trip Cup',
-        players: players,
-        rounds: rounds,
-        totalRounds: 4,
-        duration: 20,
-      );
+        final md = ExportLogic.generateMarkdown(
+          tournamentName: 'Round-Trip Cup',
+          players: players,
+          rounds: rounds,
+          totalRounds: 4,
+          duration: 20,
+        );
 
-      final parsed = ExportLogic.parseMarkdown(md)!;
+        final parsed = ExportLogic.parseMarkdown(md)!;
 
-      expect(parsed['tournamentName'], 'Round-Trip Cup');
-      expect(parsed['totalRounds'], 4);
-      expect(parsed['duration'], 20);
-      expect(parsed['currentRoundNumber'], rounds.length);
-      expect(parsed['isTournamentStarted'], true);
+        expect(parsed['tournamentName'], 'Round-Trip Cup');
+        expect(parsed['totalRounds'], 4);
+        expect(parsed['duration'], 20);
+        expect(parsed['currentRoundNumber'], rounds.length);
+        expect(parsed['isTournamentStarted'], true);
 
-      final parsedPlayers =
-          (parsed['players'] as List).cast<Map<String, dynamic>>();
-      expect(parsedPlayers.length, 2);
-      final aliceJson =
-          parsedPlayers.firstWhere((j) => j['id'] == 'alice-id');
-      expect(aliceJson['name'], 'Alice');
-      expect(aliceJson['earnedPoints'], 2.0);
-      expect(aliceJson['handicap'], 0.5);
-      expect(aliceJson['opponentsPlayed'], ['bob-id']);
+        final parsedPlayers = (parsed['players'] as List)
+            .cast<Map<String, dynamic>>();
+        expect(parsedPlayers.length, 2);
+        final aliceJson = parsedPlayers.firstWhere(
+          (j) => j['id'] == 'alice-id',
+        );
+        expect(aliceJson['name'], 'Alice');
+        expect(aliceJson['earnedPoints'], 2.0);
+        expect(aliceJson['handicap'], 0.5);
+        expect(aliceJson['opponentsPlayed'], ['bob-id']);
 
-      final parsedRounds =
-          (parsed['rounds'] as List).cast<Map<String, dynamic>>();
-      expect(parsedRounds.length, 1);
-      expect(parsedRounds.first['number'], 1);
-      final parsedPairings =
-          (parsedRounds.first['pairings'] as List).cast<Map<String, dynamic>>();
-      expect(parsedPairings[0]['whitePlayerId'], 'alice-id');
-      expect(parsedPairings[0]['blackPlayerId'], 'bob-id');
-      expect(parsedPairings[0]['result'], GameResult.whiteWin.index);
-    });
+        final parsedRounds = (parsed['rounds'] as List)
+            .cast<Map<String, dynamic>>();
+        expect(parsedRounds.length, 1);
+        expect(parsedRounds.first['number'], 1);
+        final parsedPairings = (parsedRounds.first['pairings'] as List)
+            .cast<Map<String, dynamic>>();
+        expect(parsedPairings[0]['whitePlayerId'], 'alice-id');
+        expect(parsedPairings[0]['blackPlayerId'], 'bob-id');
+        expect(parsedPairings[0]['result'], GameResult.whiteWin.index);
+      },
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -244,7 +270,7 @@ STATE_JSON_END -->''';
       // TotalScore = earnedPoints + handicap.
       final players = [
         _p('lo', 'Lo', earnedPoints: 0.0, handicap: -0.5), // total  -0.5
-        _p('hi', 'Hi', earnedPoints: 1.0, handicap: 0.0),  // total   1.0
+        _p('hi', 'Hi', earnedPoints: 1.0, handicap: 0.0), // total   1.0
         _p('md', 'Md', earnedPoints: 1.5, handicap: -1.0), // total   0.5
       ];
       final md = ExportLogic.generateMarkdown(
@@ -268,12 +294,27 @@ STATE_JSON_END -->''';
       // Bob played Carol (C has 2.0pt) → Buchholz = 2.0
       // Carol played nobody   → Buchholz = 0.0
       final players = [
-        _p('alice', 'Alice',
-            earnedPoints: 1.0, handicap: 0.0, opponentsPlayed: const ['bob']),
-        _p('bob', 'Bob',
-            earnedPoints: 0.5, handicap: 0.0, opponentsPlayed: const ['carol']),
-        _p('carol', 'Carol',
-            earnedPoints: 2.0, handicap: 0.0, opponentsPlayed: const []),
+        _p(
+          'alice',
+          'Alice',
+          earnedPoints: 1.0,
+          handicap: 0.0,
+          opponentsPlayed: const ['bob'],
+        ),
+        _p(
+          'bob',
+          'Bob',
+          earnedPoints: 0.5,
+          handicap: 0.0,
+          opponentsPlayed: const ['carol'],
+        ),
+        _p(
+          'carol',
+          'Carol',
+          earnedPoints: 2.0,
+          handicap: 0.0,
+          opponentsPlayed: const [],
+        ),
       ];
       final md = ExportLogic.generateMarkdown(
         tournamentName: 'Buchholz Test',
@@ -304,21 +345,25 @@ STATE_JSON_END -->''';
         rounds: [
           _round(1, [
             Pairing(
-                whitePlayerId: 'w',
-                blackPlayerId: 'b',
-                result: GameResult.whiteWin),
+              whitePlayerId: 'w',
+              blackPlayerId: 'b',
+              result: GameResult.whiteWin,
+            ),
             Pairing(
-                whitePlayerId: 'w',
-                blackPlayerId: 'b',
-                result: GameResult.blackWin),
+              whitePlayerId: 'w',
+              blackPlayerId: 'b',
+              result: GameResult.blackWin,
+            ),
             Pairing(
-                whitePlayerId: 'w',
-                blackPlayerId: 'b',
-                result: GameResult.draw),
+              whitePlayerId: 'w',
+              blackPlayerId: 'b',
+              result: GameResult.draw,
+            ),
             Pairing(
-                whitePlayerId: 'w',
-                blackPlayerId: 'BYE',
-                result: GameResult.bye),
+              whitePlayerId: 'w',
+              blackPlayerId: 'BYE',
+              result: GameResult.bye,
+            ),
           ]),
         ],
         totalRounds: 1,
@@ -331,10 +376,7 @@ STATE_JSON_END -->''';
     });
 
     test('pending pairing renders as "..."', () {
-      final players = [
-        _p('x', 'X'),
-        _p('y', 'Y'),
-      ];
+      final players = [_p('x', 'X'), _p('y', 'Y')];
       final md = ExportLogic.generateMarkdown(
         tournamentName: 'Pending',
         players: players,
@@ -350,10 +392,13 @@ STATE_JSON_END -->''';
     });
 
     test('player history field rolls the latest earnedPoints onto it', () {
-      final alice = _p('alice', 'Alice',
-          earnedPoints: 3.0,
-          handicap: 0.0,
-          history: const [1.0, 2.0]);
+      final alice = _p(
+        'alice',
+        'Alice',
+        earnedPoints: 3.0,
+        handicap: 0.0,
+        history: const [1.0, 2.0],
+      );
       final md = ExportLogic.generateMarkdown(
         tournamentName: 'History Test',
         players: [alice],
@@ -366,10 +411,13 @@ STATE_JSON_END -->''';
     });
 
     test('player history cap: long histories are trimmed to last 5', () {
-      final alice = _p('alice', 'Alice',
-          earnedPoints: 6.0,
-          handicap: 0.0,
-          history: const [1.0, 2.0, 3.0, 4.0, 5.0]);
+      final alice = _p(
+        'alice',
+        'Alice',
+        earnedPoints: 6.0,
+        handicap: 0.0,
+        history: const [1.0, 2.0, 3.0, 4.0, 5.0],
+      );
       final md = ExportLogic.generateMarkdown(
         tournamentName: 'History Cap',
         players: [alice],

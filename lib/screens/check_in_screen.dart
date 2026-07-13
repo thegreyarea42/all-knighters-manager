@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import '../providers/tournament_provider.dart';
 import '../providers/settings_provider.dart';
 import '../logic/export_logic.dart';
+
 class CheckInScreen extends StatefulWidget {
   const CheckInScreen({super.key});
 
@@ -108,124 +109,137 @@ class _CheckInScreenState extends State<CheckInScreen> {
               ],
             ),
             actions: [
-          const Divider(),
-          ListTile(
-            title: const Text(
-              'Export Current Tournament',
-              style: TextStyle(fontSize: 14),
-            ),
-            leading: const Icon(Icons.share, color: Colors.blueAccent),
-            onTap: () async {
-              await ExportLogic.exportToMarkdown(
-                tournamentName: provider.tournamentName,
-                players: provider.players,
-                rounds: provider.rounds,
-                totalRounds: settings.totalRounds,
-                duration: settings.roundDuration,
-              );
-            },
-          ),
-          ListTile(
-            title: const Text(
-              'Import Tournament File',
-              style: TextStyle(fontSize: 14),
-            ),
-            leading: const Icon(Icons.file_open, color: Colors.greenAccent),
-            onTap: () async {
-              final result = await FilePicker.platform.pickFiles(
-                type: FileType.custom,
-                allowedExtensions: ['md'],
-              );
-              if (result != null) {
-                String content;
-                if (result.files.single.path != null) {
-                  content = await File(
-                    result.files.single.path!,
-                  ).readAsString();
-                } else {
-                  content = utf8.decode(result.files.single.bytes!);
-                }
-                final data = ExportLogic.parseMarkdown(content);
-                if (data != null) {
-                  if (!context.mounted) return;
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Smart Import'),
-                      content: const Text(
-                        'How would you like to use this file?\n\n'
-                        'Resume: Continue the tournament as the active session.\n'
-                        'Start New: Start a fresh tournament with these players and auto-calculate new handicaps.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('CANCEL'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            provider.resumeFromData(data);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Resumed ${provider.tournamentName}')),
-                            );
-                          },
-                          child: const Text('RESUME SESSION'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            provider.importNewTournament(data);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('New tournament created with calculated handicaps!')),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('START NEW'),
-                        ),
-                      ],
-                    ),
-                  ).then((_) {
-                    if (context.mounted) Navigator.pop(context);
-                  });
-                } else {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid Tournament File.')),
+              const Divider(),
+              ListTile(
+                title: const Text(
+                  'Export Current Tournament',
+                  style: TextStyle(fontSize: 14),
+                ),
+                leading: const Icon(Icons.share, color: Colors.blueAccent),
+                onTap: () async {
+                  await ExportLogic.exportToMarkdown(
+                    tournamentName: provider.tournamentName,
+                    players: provider.players,
+                    rounds: provider.rounds,
+                    totalRounds: settings.totalRounds,
+                    duration: settings.roundDuration,
                   );
-                }
-              }
-            },
-          ),
-          const Divider(),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              final d = int.tryParse(durationController.text) ?? 20;
-              final r = int.tryParse(roundsController.text) ?? 4;
-              settings.updateSettings(d, r, r1PairingMode: r1Mode);
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'SAVE',
-              style: TextStyle(
-                color: Colors.blueAccent,
-                fontWeight: FontWeight.bold,
+                },
               ),
-            ),
+              ListTile(
+                title: const Text(
+                  'Import Tournament File',
+                  style: TextStyle(fontSize: 14),
+                ),
+                leading: const Icon(Icons.file_open, color: Colors.greenAccent),
+                onTap: () async {
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['md'],
+                  );
+                  if (result != null) {
+                    String content;
+                    if (result.files.single.path != null) {
+                      content = await File(
+                        result.files.single.path!,
+                      ).readAsString();
+                    } else {
+                      content = utf8.decode(result.files.single.bytes!);
+                    }
+                    final data = ExportLogic.parseMarkdown(content);
+                    if (data != null) {
+                      if (!context.mounted) return;
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Smart Import'),
+                          content: const Text(
+                            'How would you like to use this file?\n\n'
+                            'Resume: Continue the tournament as the active session.\n'
+                            'Start New: Start a fresh tournament with these players and auto-calculate new handicaps.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('CANCEL'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                provider.resumeFromData(data);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Resumed ${provider.tournamentName}',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text('RESUME SESSION'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                provider.importNewTournament(data);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'New tournament created with calculated handicaps!',
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('START NEW'),
+                            ),
+                          ],
+                        ),
+                      ).then((_) {
+                        if (context.mounted) Navigator.pop(context);
+                      });
+                    } else {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Invalid Tournament File.'),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              const Divider(),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'CANCEL',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  final d = int.tryParse(durationController.text) ?? 20;
+                  final r = int.tryParse(roundsController.text) ?? 4;
+                  settings.updateSettings(d, r, r1PairingMode: r1Mode);
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'SAVE',
+                  style: TextStyle(
+                    color: Colors.blueAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
-    },
-  );
-}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -394,15 +408,24 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             if (player.handicap != 0)
                               GestureDetector(
                                 onTap: () {
-                                  final ctrl = TextEditingController(text: player.handicap.toString());
+                                  final ctrl = TextEditingController(
+                                    text: player.handicap.toString(),
+                                  );
                                   showDialog(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      title: Text('Edit Handicap for ${player.name}'),
+                                      title: Text(
+                                        'Edit Handicap for ${player.name}',
+                                      ),
                                       content: TextField(
                                         controller: ctrl,
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        decoration: const InputDecoration(labelText: 'Handicap (+/-)'),
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: true,
+                                            ),
+                                        decoration: const InputDecoration(
+                                          labelText: 'Handicap (+/-)',
+                                        ),
                                         autofocus: true,
                                       ),
                                       actions: [
@@ -412,11 +435,22 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                         ),
                                         TextButton(
                                           onPressed: () {
-                                            final hcp = double.tryParse(ctrl.text) ?? player.handicap;
-                                            provider.updatePlayerHandicap(player.id, hcp);
+                                            final hcp =
+                                                double.tryParse(ctrl.text) ??
+                                                player.handicap;
+                                            provider.updatePlayerHandicap(
+                                              player.id,
+                                              hcp,
+                                            );
                                             Navigator.pop(ctx);
                                           },
-                                          child: const Text('SAVE', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                          child: const Text(
+                                            'SAVE',
+                                            style: TextStyle(
+                                              color: Colors.blueAccent,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -492,8 +526,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
                     ),
                     if (players.length >= 2)
                       ElevatedButton(
-                        onPressed: () =>
-                            provider.startTournament(settings.roundDuration, r1pMode: settings.round1PairingMode),
+                        onPressed: () => provider.startTournament(
+                          settings.roundDuration,
+                          r1pMode: settings.round1PairingMode,
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,
                           padding: const EdgeInsets.symmetric(

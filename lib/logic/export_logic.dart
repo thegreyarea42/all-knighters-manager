@@ -71,7 +71,9 @@ class ExportLogic {
     for (var p in ranked) {
       final nextHistory = List<double>.from(p.history)..add(p.earnedPoints);
       if (nextHistory.length > 5) nextHistory.removeAt(0);
-      sb.writeln('* ${p.name} | Score: ${p.earnedPoints} | Handicap: ${p.handicap} | History: [${nextHistory.join(", ")}]');
+      sb.writeln(
+        '* ${p.name} | Score: ${p.earnedPoints} | Handicap: ${p.handicap} | History: [${nextHistory.join(", ")}]',
+      );
     }
     sb.writeln();
 

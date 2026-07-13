@@ -13,6 +13,14 @@ class TournamentProvider with ChangeNotifier {
   // Task 5: Unique storage key for All Knighters
   static const String _storageKey = 'ak_tm_data';
 
+  /// Handicap centring constant. 5-round tournament earns span [0, 5], so
+  /// 2.5 is the natural midpoint. Drives `importNewTournament`'s formula
+  /// (used as both the empty-history default AND the formula's constant).
+  /// Change with care — re-run
+  /// `test/three_tournament_handicap_evolution_test.dart` after any shift
+  /// to confirm the trajectory stays in the expected range.
+  static const double handicapCenter = 2.5;
+
   List<Player> _players = [];
   List<Round> _rounds = [];
   int _currentRoundNumber = 0;
@@ -73,7 +81,10 @@ class TournamentProvider with ChangeNotifier {
     }
   }
 
-  void startTournament(int initialDurationMinutes, {String r1pMode = 'Parity'}) {
+  void startTournament(
+    int initialDurationMinutes, {
+    String r1pMode = 'Parity',
+  }) {
     if (_players.length < 2) return;
     _r1pMode = r1pMode;
     _isTournamentStarted = true;
@@ -84,7 +95,11 @@ class TournamentProvider with ChangeNotifier {
   void _nextRound() {
     _currentRoundNumber++;
     final isRound1 = _currentRoundNumber == 1;
-    final pairings = PairingEngine.generatePairings(_players, isRound1: isRound1, r1pMode: _r1pMode);
+    final pairings = PairingEngine.generatePairings(
+      _players,
+      isRound1: isRound1,
+      r1pMode: _r1pMode,
+    );
 
     pairings.sort((a, b) {
       if (a.isBye) return 1;
@@ -152,37 +167,46 @@ class TournamentProvider with ChangeNotifier {
 
   void importNewTournament(Map<String, dynamic> data) {
     _players = [];
-    final oldPlayers = (data['players'] as List).map((p) => Player.fromJson(p)).toList();
+    final oldPlayers = (data['players'] as List)
+        .map((p) => Player.fromJson(p))
+        .toList();
     for (var p in oldPlayers) {
-      double historyAvg = 2.0;
+      // Recompute each player's handicap from their final score + 5-game
+      // history average. Centring on `handicapCenter` (= 2.5) keeps fresh
+      // extremes at ±1.25 (no clamp) and veteran extremes clamping
+      // symmetrically at ±1.5. (Previously `2.0` produced asymmetric fresh
+      // range: winners clamped at -1.5 while losers only reached +1.0.)
+      double historyAvg = handicapCenter;
       if (p.history.isNotEmpty) {
         historyAvg = p.history.reduce((a, b) => a + b) / p.history.length;
       }
-      
-      double newHandicap = 2.0 - ((p.earnedPoints + historyAvg) / 2);
+
+      double newHandicap = handicapCenter - ((p.earnedPoints + historyAvg) / 2);
       newHandicap = newHandicap.clamp(-1.5, 1.5);
-      
+
       final newHistory = List<double>.from(p.history)..add(p.earnedPoints);
       if (newHistory.length > 5) {
         newHistory.removeAt(0);
       }
 
-      _players.add(Player(
-        id: p.id,
-        name: p.name,
-        handicap: newHandicap,
-        history: newHistory,
-        earnedPoints: 0.0,
-      ));
+      _players.add(
+        Player(
+          id: p.id,
+          name: p.name,
+          handicap: newHandicap,
+          history: newHistory,
+          earnedPoints: 0.0,
+        ),
+      );
     }
-    
+
     _rounds = [];
     _currentRoundNumber = 0;
     _isTournamentStarted = false;
     _secondsRemaining = 0;
     _ticker?.cancel();
     _isTimerRunning = false;
-    
+
     notifyListeners();
     saveToPrefs();
   }

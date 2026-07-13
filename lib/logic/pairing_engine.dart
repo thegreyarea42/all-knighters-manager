@@ -44,21 +44,40 @@ class PairingEngine {
       activePlayers.shuffle();
       if (r1pMode == 'Random') {
         for (int i = 0; i < activePlayers.length; i += 2) {
-          pairings.add(Pairing(whitePlayerId: activePlayers[i].id, blackPlayerId: activePlayers[i + 1].id));
+          pairings.add(
+            Pairing(
+              whitePlayerId: activePlayers[i].id,
+              blackPlayerId: activePlayers[i + 1].id,
+            ),
+          );
         }
         return pairings;
       } else if (r1pMode == 'Seeded') {
-        activePlayers.sort((a, b) => a.handicap.compareTo(b.handicap)); // Strongest first
+        activePlayers.sort(
+          (a, b) => a.handicap.compareTo(b.handicap),
+        ); // Strongest first
         int half = activePlayers.length ~/ 2;
         for (int i = 0; i < half; i++) {
-          pairings.add(Pairing(whitePlayerId: activePlayers[i].id, blackPlayerId: activePlayers[i + half].id));
+          pairings.add(
+            Pairing(
+              whitePlayerId: activePlayers[i].id,
+              blackPlayerId: activePlayers[i + half].id,
+            ),
+          );
         }
         return pairings;
       } else {
         // Default: Parity
-        activePlayers.sort((a, b) => a.handicap.compareTo(b.handicap)); // Strongest first
+        activePlayers.sort(
+          (a, b) => a.handicap.compareTo(b.handicap),
+        ); // Strongest first
         for (int i = 0; i < activePlayers.length; i += 2) {
-          pairings.add(Pairing(whitePlayerId: activePlayers[i].id, blackPlayerId: activePlayers[i + 1].id));
+          pairings.add(
+            Pairing(
+              whitePlayerId: activePlayers[i].id,
+              blackPlayerId: activePlayers[i + 1].id,
+            ),
+          );
         }
         return pairings;
       }
