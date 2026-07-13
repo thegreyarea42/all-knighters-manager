@@ -8,6 +8,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    # Manual-trigger inputs. The "debug" flag opts this run into verbose
+    # GitHub Actions step logging without making every commit-triggered run
+    # noisy. Default is false so routine pushes stay quiet.
+    inputs:
+      debug:
+        description: 'Enable verbose GitHub Actions step logging (ACTIONS_STEP_DEBUG=true).'
+        type: boolean
+        required: false
+        default: false
 
 # peaceiris/actions-gh-pages needs write access to push commits to gh-pages.
 permissions:
@@ -24,15 +33,13 @@ jobs:
   build:
     name: Build & Deploy
     runs-on: ubuntu-latest
-    # Enable GitHub Actions' debug logging at the job level so every step
-    # emits ::debug:: traces, expanded context lines, and full runner env
-    # diagnostics. The trade-off is a modest increase in log noise on every
-    # deploy — but for a once-per-deploy tournament build, the diagnostic
-    # value outweighs the cosmetic cost. To turn this off later: remove the
-    # ACTIONS_STEP_DEBUG entry below, or move it behind a workflow_dispatch
-    # input / repo secret so it's opt-in.
+    # Enable GitHub Actions' debug logging only when the workflow was
+    # triggered manually with the "debug" input checked. Push-triggered
+    # runs and default workflow_dispatch runs stay quiet. GitHub converts
+    # boolean env values to "true"/"false" strings; the runner only
+    # activates verbose logging when ACTIONS_STEP_DEBUG matches "true".
     env:
-      ACTIONS_STEP_DEBUG: 'true'
+      ACTIONS_STEP_DEBUG: ${{ inputs.debug }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
