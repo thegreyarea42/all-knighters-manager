@@ -54,6 +54,16 @@ flutter pub get
 flutter run
 ```
 
+
+
+## 🐛 Debugging deploys
+
+If the GitHub Pages deploy is failing and you want verbose logs without
+modifying a single file, run the workflow manually with verbose logging
+enabled: from the **Actions** tab, click **Deploy Flutter Web to GitHub Pages**
+ → **Run workflow** → tick the `debug` input → **Run**. The runner will
+emit `::debug::` traces for every step. Push-triggered runs and unticked
+manual runs stay quiet by default.
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [`LICENSE`](LICENSE) file for the full text.
