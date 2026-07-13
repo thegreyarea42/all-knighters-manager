@@ -1,0 +1,167 @@
+# ===========================================================================
+# Miscellaneous
+# ===========================================================================
+*.class
+*.log
+*.pyc
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# ===========================================================================
+# OS / Desktop metadata
+# ===========================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+*~
+
+# ===========================================================================
+# Editors / IDEs
+# ===========================================================================
+# IntelliJ IDEA / Android Studio / WebStorm / PhpStorm / RubyMine / etc.
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (uncomment to include launch configurations)
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# Emacs
+\#*\#
+.emacs.desktop
+
+# ===========================================================================
+# VCS / history
+# ===========================================================================
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+.hg/
+
+# ===========================================================================
+# Flutter / Dart / Pub
+# ===========================================================================
+**/doc/api/
+**/ios/Flutter/.last_build_id
+**/macos/Flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+.dart_tool/
+.flutter-plugins-dependencies
+.flutter-plugins
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication
+app.*.symbols
+
+# Obfuscation
+app.*.map.json
+
+# Generated code (build_runner)
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Coverage output
+*.lcov
+/coverage/lcov.info
+
+# ===========================================================================
+# Android
+# ===========================================================================
+**/android/local.properties
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/key.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/.idea/
+**/android/*.iml
+
+# Keystore files
+*.jks
+*.keystore
+
+# ===========================================================================
+# iOS / macOS (CocoaPods)
+# ===========================================================================
+**/ios/Pods/
+**/ios/Podfile.lock
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/.symlinks/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+
+**/macos/Pods/
+**/macos/Podfile.lock
+**/macos/Flutter/Flutter.framework
+**/macos/Flutter/Flutter.podspec
+**/macos/Flutter/Generated.xcconfig
+**/macos/Flutter/flutter_export_environment.sh
+
+# Xcode (in case any are checked in by mistake)
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+
+# ===========================================================================
+# Secrets / environment
+# ===========================================================================
+# Local environment overrides
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Service secrets (Firebase, Google Cloud, Apple, etc.)
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase_service_account.json
+**/AuthKey_*.p8
+
+# ===========================================================================
+# Node tooling (in case the project ever picks up a JS pipeline)
+# ===========================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ===========================================================================
+# Project-specific: analysis dumps (prevent re-introduction)
+# ===========================================================================
+analysis*.txt
+final_analysis*.txt
