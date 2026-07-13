@@ -69,7 +69,7 @@ jobs:
           publish_branch: gh-pages
           user_name: github-actions[bot]
           user_email: github-actions[bot]@users.noreply.github.com
-          commit_message: deploy: gh-pages from ${{ github.sha }}
+          commit_message: 'deploy: gh-pages from ${{ github.sha }}'
           # force_orphan wipes prior deploy artefacts on every run, keeping
           # the gh-pages branch history as a single linear deploy log.
           force_orphan: true
