@@ -111,16 +111,20 @@ void main() {
       _inject(p, 'a', 'Alice');
       _inject(p, 'b', 'Bob');
       p.startTournament(20);
+      // Round-1 Parity pre-shuffles players (see PairingEngine), so identical
+      // handicaps means color assignment is random — read ids from the pair.
       final pair = p.rounds.single.pairings.single;
+      final whiteId = pair.whitePlayerId;
+      final blackId = pair.blackPlayerId;
 
-      p.updateResult(pair.whitePlayerId, pair.blackPlayerId, GameResult.whiteWin);
-      final alicePointsAfter1 = _byId(p, 'a').earnedPoints;
+      p.updateResult(whiteId, blackId, GameResult.whiteWin);
+      final winnerPointsAfter1 = _byId(p, whiteId).earnedPoints;
       // Issuing the same result again: recalculateStandings RESETS all
       // player state then re-applies from rounds — must remain 1.0, not 2.0.
-      p.updateResult(pair.whitePlayerId, pair.blackPlayerId, GameResult.whiteWin);
-      expect(_byId(p, 'a').earnedPoints, alicePointsAfter1,
+      p.updateResult(whiteId, blackId, GameResult.whiteWin);
+      expect(_byId(p, whiteId).earnedPoints, winnerPointsAfter1,
           reason: 'recalculateStandings must reset + re-apply to remain idempotent');
-      expect(_byId(p, 'a').earnedPoints, 1.0);
+      expect(_byId(p, whiteId).earnedPoints, 1.0);
     });
 
     test('draw awards 0.5 to each and records color history', () {

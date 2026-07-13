@@ -1,0 +1,75 @@
+name: Deploy Flutter Web to GitHub Pages
+
+# Publish the demo at https://thegreyarea42.github.io/all-knighters-manager/
+# whenever main advances. The historical setup requires GitHub Pages in this
+# repo to point at the gh-pages branch /root.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# peaceiris/actions-gh-pages needs write access to push commits to gh-pages.
+permissions:
+  contents: write
+
+# Don't pile up overlapping deploys. cancel-in-progress: false queues the
+# next push behind the in-flight deploy rather than killing it, so gh-pages
+# is never left mid-commit if a quick double-push happens.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: Build web release
+        # --base-href ./ produces relative <base href="./"> in index.html so
+        # assets load correctly under any repo-pages URL prefix without
+        # having to hardcode /all-knighters-manager/.
+        run: flutter build web --release --base-href ./
+
+      - name: Disable Jekyll on gh-pages
+        # Flutter's build emits files (e.g. service worker copy) that Jekyll
+        # would otherwise skip or transform. .nojekyll tells GitHub Pages to
+        # serve everything verbatim.
+        run: touch build/web/.nojekyll
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          publish_branch: gh-pages
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
+          commit_message: deploy: gh-pages from ${{ github.sha }}
+          # force_orphan wipes prior deploy artefacts on every run, keeping
+          # the gh-pages branch history as a single linear deploy log.
+          force_orphan: true
