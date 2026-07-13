@@ -50,10 +50,11 @@ jobs:
         run: flutter analyze
 
       - name: Build web release
-        # --base-href ./ produces relative <base href="./"> in index.html so
-        # assets load correctly under any repo-pages URL prefix without
-        # having to hardcode /all-knighters-manager/.
-        run: flutter build web --release --base-href ./
+        # --base-href /all-knighters-manager/ is required because this is a
+        # GitHub project page (served at thegreyarea42.github.io/<repo-name>/).
+        # './' is rejected by Flutter with 'should start and end with /', so
+        # the path must be a properly-rooted URL prefix matching the live demo.
+        run: flutter build web --release --base-href /all-knighters-manager/
 
       - name: Disable Jekyll on gh-pages
         # Flutter's build emits files (e.g. service worker copy) that Jekyll
