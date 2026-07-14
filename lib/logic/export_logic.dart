@@ -184,20 +184,56 @@ class ExportLogic {
   }
 
   static Map<String, dynamic>? parseMarkdown(String content) {
-    // Task 3: Check for app: TiltClock header
-    if (!content.contains('app: TiltClock')) {
+    // Strip an optional UTF-8 BOM (Windows Notepad and some Markdown
+    // editors emit one). Without this, downstream checks like
+    // contains(validationTag) still match (the BOM sits at offset 0, not
+    // between substrings) BUT keeping the BOM in the document can haunt
+    // callers that re-emit or compare documents. Strip eagerly so all
+    // downstream checks operate on the canonical document.
+    String text = content;
+    if (text.startsWith('\uFEFF')) {
+      text = text.substring(1);
+    }
+
+    // Reject empty / whitespace-only input explicitly so users uploading
+    // a zero-byte file don't get an opaque JSON error.
+    if (text.trim().isEmpty) {
       return null;
     }
-    try {
-      final start = content.indexOf('STATE_JSON_START');
-      final end = content.indexOf('STATE_JSON_END');
-      if (start != -1 && end != -1) {
-        final jsonStr = content.substring(start + 16, end).trim();
-        return jsonDecode(jsonStr);
-      }
-    } catch (e) {
-      // Failed to parse
+
+    // Task 3: Check for the app-specific tag so we don't try to parse
+    // arbitrary user markdown as our state format.
+    if (!text.contains(validationTag)) {
+      return null;
     }
-    return null;
+
+    try {
+      final start = text.indexOf('STATE_JSON_START');
+      final end = text.indexOf('STATE_JSON_END');
+      // Both markers must exist AND the end must come AFTER the start,
+      // otherwise substring(start + 16, end) is a 0-length or negative
+      // window (the JSON payload is what callers actually depend on).
+      if (start == -1 ||
+          end == -1 ||
+          end <= start + 'STATE_JSON_START'.length) {
+        return null;
+      }
+      final jsonStr = text
+          .substring(start + 'STATE_JSON_START'.length, end)
+          .trim();
+      if (jsonStr.isEmpty) {
+        return null;
+      }
+      final decoded = jsonDecode(jsonStr);
+      // Guard against jsonDecode yielding a non-Map (array, scalar). The
+      // callers — importNewTournament / resumeFromData — assume a Map
+      // keyed by players / rounds / tournamentName etc. Returning null
+      // here keeps the existing "Invalid Tournament File" UX path.
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      // Malformed JSON between the markers — treat as "not a valid
+      // tournament export" rather than crashing the importer.
+      return null;
+    }
   }
 }

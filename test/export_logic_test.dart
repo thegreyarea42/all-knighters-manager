@@ -429,4 +429,84 @@ STATE_JSON_END -->''';
       expect(md, contains('History: [2.0, 3.0, 4.0, 5.0, 6.0]'));
     });
   });
+
+  // -------------------------------------------------------------------------
+  // parseMarkdown input robustness (empty / whitespace / BOM / non-Map).
+  // -------------------------------------------------------------------------
+  group('ExportLogic.parseMarkdown — input robustness', () {
+    test('returns null on an empty string', () {
+      expect(ExportLogic.parseMarkdown(''), isNull);
+    });
+
+    test('returns null on a whitespace-only string', () {
+      expect(ExportLogic.parseMarkdown('   \n\t  \r\n  '), isNull);
+    });
+
+    test(
+      'strips a UTF-8 BOM at the start of the document before validating',
+      () {
+        const body = '''---
+app: TiltClock
+---
+<!-- STATE_JSON_START
+{"tournamentName":"BOM Cup","totalRounds":4,"duration":20,"currentRoundNumber":0,"isTournamentStarted":true,"players":[],"rounds":[]}
+STATE_JSON_END -->''';
+        // Windows Notepad and some Markdown editors prepend a U+FEFF
+        // byte-order mark.  parseMarkdown must not refuse such files.
+        final punctuated = '\uFEFF$body';
+        final parsed = ExportLogic.parseMarkdown(punctuated);
+        expect(parsed, isNotNull, reason: 'BOM should not prevent parsing');
+        expect(parsed!['tournamentName'], 'BOM Cup');
+      },
+    );
+
+    test(
+      'returns null when STATE_JSON markers exist but the payload is empty',
+      () {
+        // `<!-- STATE_JSON_START\nSTATE_JSON_END -->` has zero characters
+        // of JSON between the markers.  Earlier code would call
+        // jsonDecode('') which throws — must return null cleanly.
+        const md = '''---
+app: TiltClock
+---
+<!-- STATE_JSON_START
+STATE_JSON_END -->''';
+        expect(ExportLogic.parseMarkdown(md), isNull);
+      },
+    );
+
+    test(
+      'returns null when STATE_JSON_START appears AFTER STATE_JSON_END',
+      () {
+        // Defensive ordering check: if a user-edited file accidentally
+        // swaps the markers, the substring(start + 16, end) window goes
+        // negative-length / backwards.  Treat as invalid input.
+        const md = '''---
+app: TiltClock
+---
+<!-- STATE_JSON_END happens first
+then later STATE_JSON_START
+-->''';
+        expect(ExportLogic.parseMarkdown(md), isNull);
+      },
+    );
+
+    test(
+      'returns null when jsonDecode yields a non-Map JSON value (array)',
+      () {
+        // jsonDecode('[1,2,3]') returns a List, but downstream
+        // (importNewTournament, resumeFromData) treats `data['players']`
+        // as a Map.  Falling back to null keeps the existing "Invalid
+        // Tournament File" snackbar path active instead of throwing a
+        // TypeError deep in the import flow.
+        const md = '''---
+app: TiltClock
+---
+<!-- STATE_JSON_START
+[1, 2, 3]
+STATE_JSON_END -->''';
+        expect(ExportLogic.parseMarkdown(md), isNull);
+      },
+    );
+  });
 }

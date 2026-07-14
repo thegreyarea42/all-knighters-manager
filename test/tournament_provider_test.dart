@@ -331,4 +331,97 @@ void main() {
       expect(p.isTournamentStarted, false);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Defensive guards (see code-reviewer should-fix list).
+  // -------------------------------------------------------------------------
+  group('Defensive guards', () {
+    test(
+      '_nextRound (via startNextRound) is a no-op when players.length < 2',
+      () {
+        final p = _newProvider();
+        _inject(p, 'solo', 'Solo', handicap: 1.0);
+        // startTournament guards n<2 on entry, so the only public path
+        // that reaches _nextRound with a degenerate player count is
+        // startNextRound — typically after importing a 1-player file.
+        p.startNextRound(20);
+
+        expect(p.rounds, isEmpty);
+        expect(
+          p.currentRoundNumber,
+          0,
+          reason: '_nextRound must NOT advance the round counter if the guard fires',
+        );
+      },
+    );
+
+    test(
+      'mutating methods do not throw and do not notify after dispose',
+      () async {
+        final p = _newProvider();
+        // Let the constructor's async loadFromPrefs settle before we
+        // start counting notifications.
+        await Future<void>.delayed(Duration.zero);
+
+        var afterDispose = 0;
+        p.addListener(() {
+          afterDispose++;
+        });
+
+        p.dispose();
+        afterDispose = 0; // reset post-dispose baseline
+
+        // The original code would have asserted in notifyListeners after
+        // super.dispose() deactivated the notifier. The new _safeNotify
+        // wrapper turns this into a silent no-op.
+        expect(() => p.addPlayer('Test', 0.0), returnsNormally);
+        expect(() => p.removePlayer('Test'), returnsNormally);
+        expect(() => p.updatePlayerHandicap('Test', 1.0), returnsNormally);
+        expect(() => p.adjustTime(60), returnsNormally);
+        expect(() => p.stopRoundNow(), returnsNormally);
+        expect(
+          afterDispose,
+          0,
+          reason: 'listeners must not be invoked after dispose',
+        );
+      },
+    );
+
+    test(
+      'resetTournament erases the storage key even when called after dispose',
+      () async {
+        final p = TournamentProvider();
+        await Future<void>.delayed(Duration.zero); // initial empty load
+
+        // Pre-populate prefs as if a tournament had been saved in a
+        // prior session. We set THIS after construction (with a complete
+        // payload) rather than seeding it in setMockInitialValues, so we
+        // don't trip the null coercion on `currentRoundNumber` in the
+        // constructor's loadFromPrefs continuation.
+        final prefs = await SharedPreferences.getInstance();
+        const fullPayload =
+            '{"players":[{"id":"a","name":"A","earnedPoints":0,"handicap":0,'
+            '"colorHistory":[],"opponentsPlayed":[],"history":[],"hadBye":false}],'
+            '"rounds":[],"currentRoundNumber":0,"isTournamentStarted":false,'
+            '"tournamentName":"Stored","secondsRemaining":0}';
+        await prefs.setString('ak_tm_data', fullPayload);
+        expect(prefs.getString('ak_tm_data'), isNotNull);
+
+        p.dispose();
+
+        // After dispose the provider no longer notifies, but the user
+        // explicitly asked for a reset, so the on-disk state MUST be
+        // cleared — otherwise a subsequent app launch would resurface
+        // the stale tournament they just reset.
+        expect(() => p.resetTournament(), returnsNormally);
+        await Future<void>.delayed(Duration.zero); // let the async remove run
+
+        expect(
+          prefs.getString('ak_tm_data'),
+          isNull,
+          reason: 'resetTournament must clear prefs even when called post-dispose',
+        );
+      },
+    );
+  });
 }

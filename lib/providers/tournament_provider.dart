@@ -33,6 +33,17 @@ class TournamentProvider with ChangeNotifier {
   Timer? _ticker;
   String _r1pMode = 'Parity';
 
+  /// True once [dispose] has been called. Async callbacks (timer ticks,
+  /// SharedPrefs continuations) check this before touching state or
+  /// calling [notifyListeners].
+  bool _disposed = false;
+
+  /// Wraps [notifyListeners] in a disposed-guard so async resumes after
+  /// [dispose] do not assert on a deactivated [ChangeNotifier].
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
+  }
+
   List<Player> get players => _players;
   List<Round> get rounds => _rounds;
   int get currentRoundNumber => _currentRoundNumber;
@@ -47,7 +58,7 @@ class TournamentProvider with ChangeNotifier {
 
   void setTournamentName(String name) {
     _tournamentName = name;
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
@@ -62,13 +73,13 @@ class TournamentProvider with ChangeNotifier {
         handicap: handicap,
       ),
     );
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
   void removePlayer(String id) {
     _players.removeWhere((p) => p.id == id);
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
@@ -76,7 +87,7 @@ class TournamentProvider with ChangeNotifier {
     final player = _players.maybeFirstWhere((p) => p.id == id);
     if (player != null) {
       player.handicap = handicap;
-      notifyListeners();
+      _safeNotify();
       saveToPrefs();
     }
   }
@@ -93,6 +104,12 @@ class TournamentProvider with ChangeNotifier {
   }
 
   void _nextRound() {
+    // Defensive guard: matches [startTournament]'s n>=2 requirement and
+    // blocks degenerate rounds from imports / future callers that bypass
+    // the startTournament check. The pairing engine already handles a
+    // singleton gracefully with a single-BYE pairing, but generating a
+    // pointless round wastes a round number and confuses the history tab.
+    if (_players.length < 2) return;
     _currentRoundNumber++;
     final isRound1 = _currentRoundNumber == 1;
     final pairings = PairingEngine.generatePairings(
@@ -119,7 +136,7 @@ class TournamentProvider with ChangeNotifier {
       startTime: DateTime.now(),
     );
     _rounds.add(newRound);
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
@@ -129,6 +146,13 @@ class TournamentProvider with ChangeNotifier {
       _ticker?.cancel();
     } else {
       _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
+        // If the provider was disposed mid-tick, super.dispose() has
+        // already deactivated the notifier — bail and cancel so a final
+        // _safeNotify below is unnecessary work.
+        if (_disposed) {
+          timer.cancel();
+          return;
+        }
         if (_secondsRemaining > 0) {
           _secondsRemaining--;
           if (_secondsRemaining == 300) {
@@ -137,23 +161,32 @@ class TournamentProvider with ChangeNotifier {
           if (_secondsRemaining == 0) {
             _playBuzzer();
           }
-          notifyListeners();
+          _safeNotify();
         } else {
           _ticker?.cancel();
           _isTimerRunning = false;
-          notifyListeners();
+          _safeNotify();
         }
       });
     }
     _isTimerRunning = !_isTimerRunning;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _playBuzzer() {
     try {
       HapticFeedback.heavyImpact();
       final player = AudioPlayer();
-      player.play(AssetSource('sounds/buzzer.mp3'));
+      // AudioPlayer holds native resources (decoder, audio session).
+      // Dispose it after playback completes — success OR failure — to
+      // avoid leaking a fresh AudioPlayer on every timer tick.
+      // unawaited() detaches the cleanup so the timer callback isn't
+      // blocked on audio playback.
+      unawaited(
+        player
+            .play(AssetSource('sounds/buzzer.mp3'))
+            .whenComplete(() => player.dispose()),
+      );
     } catch (_) {}
   }
 
@@ -161,7 +194,12 @@ class TournamentProvider with ChangeNotifier {
     try {
       HapticFeedback.mediumImpact();
       final player = AudioPlayer();
-      player.play(AssetSource('sounds/chime.mp3'));
+      // See [_playBuzzer]: dispose the player after playback completes.
+      unawaited(
+        player
+            .play(AssetSource('sounds/chime.mp3'))
+            .whenComplete(() => player.dispose()),
+      );
     } catch (_) {}
   }
 
@@ -207,20 +245,20 @@ class TournamentProvider with ChangeNotifier {
     _ticker?.cancel();
     _isTimerRunning = false;
 
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
   void adjustTime(int seconds) {
     _secondsRemaining = (_secondsRemaining + seconds).clamp(0, 3600);
-    notifyListeners();
+    _safeNotify();
   }
 
   void stopRoundNow() {
     _secondsRemaining = 0;
     _ticker?.cancel();
     _isTimerRunning = false;
-    notifyListeners();
+    _safeNotify();
   }
 
   void updateResult(String whiteId, String blackId, GameResult result) {
@@ -288,7 +326,7 @@ class TournamentProvider with ChangeNotifier {
         }
       }
     }
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
@@ -308,7 +346,7 @@ class TournamentProvider with ChangeNotifier {
 
   void finalizeTournament() {
     _isTournamentStarted = false;
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
@@ -346,6 +384,10 @@ class TournamentProvider with ChangeNotifier {
 
   Future<void> loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+    // Provider may have been disposed while prefs were loading. Bail
+    // before mutating a dead instance or asserting on a deactivated
+    // ChangeNotifier inside notifyListeners.
+    if (_disposed) return;
     final jsonStr = prefs.getString(_storageKey);
     if (jsonStr != null) {
       final data = jsonDecode(jsonStr);
@@ -357,7 +399,7 @@ class TournamentProvider with ChangeNotifier {
       _isTournamentStarted = data['isTournamentStarted'];
       _tournamentName = data['tournamentName'] ?? "Weekly Club Tournament";
       _secondsRemaining = data['secondsRemaining'] ?? 0;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -371,7 +413,7 @@ class TournamentProvider with ChangeNotifier {
     _tournamentName =
         data['tournamentName'] ?? data['title'] ?? "Weekly Club Tournament";
     _secondsRemaining = data['secondsRemaining'] ?? 0;
-    notifyListeners();
+    _safeNotify();
     saveToPrefs();
   }
 
@@ -384,12 +426,22 @@ class TournamentProvider with ChangeNotifier {
     _ticker?.cancel();
     _isTimerRunning = false;
     final prefs = await SharedPreferences.getInstance();
+    // Always clear the prefs entry — even after dispose — so the next
+    // app launch doesn't see the stale tournament the user just reset.
+    // Only the listener notification is gated by [!_disposed], since
+    // super.dispose() has deactivated the notifier by that point.
     await prefs.remove(_storageKey);
-    notifyListeners();
+    if (!_disposed) {
+      _safeNotify();
+    }
   }
 
   @override
   void dispose() {
+    // Set FIRST so any racing callback (timer tick, async prefs loading)
+    // observes _disposed=true before super.dispose() deactivates the
+    // notifier and notifyListeners() would assert.
+    _disposed = true;
     _ticker?.cancel();
     super.dispose();
   }
